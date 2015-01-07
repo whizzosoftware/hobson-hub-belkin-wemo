@@ -5,7 +5,7 @@
     <artifactId>hobson-hub-belkin-wemo</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <packaging>bundle</packaging>
-    <name>Hobson WeMo Plugin</name>
+    <name>Belkin WeMo Plugin</name>
     <description>Provides the ability to control Belkin WeMo devices.</description>
     <dependencies>
         <dependency>
