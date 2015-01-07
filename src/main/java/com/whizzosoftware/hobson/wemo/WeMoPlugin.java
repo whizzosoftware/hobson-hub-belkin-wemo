@@ -57,7 +57,7 @@ public class WeMoPlugin extends AbstractHttpClientPlugin {
     @Override
     public void onStartup(Dictionary config) {
         // add config property for devices
-        addConfigurationPropertyMetaData(new ConfigurationPropertyMetaData(PROP_WEMO_URIS, "WeMo URIs", "A JSON array of URIs for your WeMo devices", ConfigurationPropertyMetaData.Type.STRING));
+        addConfigurationPropertyMetaData(new ConfigurationPropertyMetaData(PROP_WEMO_URIS, "WeMo URIs", "A list of hosts for your WeMo devices (should currently be formatted as a JSON array of strings until the web console supports proper lists)", ConfigurationPropertyMetaData.Type.STRING));
 
         // set the status to running
         setStatus(new PluginStatus(PluginStatus.Status.RUNNING));
