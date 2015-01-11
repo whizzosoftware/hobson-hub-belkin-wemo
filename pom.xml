@@ -2,7 +2,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.whizzosoftware.hobson.hub</groupId>
     <artifactId>hobson-hub-belkin-wemo</artifactId>
-    <version>0.1.0</version>
+    <version>0.1.1-SNAPSHOT</version>
     <packaging>bundle</packaging>
     <name>Belkin WeMo Plugin</name>
     <description>Provides the ability to control Belkin WeMo devices.</description>
@@ -130,7 +130,7 @@
     <scm>
         <connection>scm:git:ssh://git@github.com/whizzosoftware/hobson-hub-belkin-wemo.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/whizzosoftware/hobson-hub-belkin-wemo.git</developerConnection>
-        <tag>hobson-hub-belkin-wemo-0.1.0</tag>
+        <tag>HEAD</tag>
     </scm>
     <distributionManagement>
         <repository>
