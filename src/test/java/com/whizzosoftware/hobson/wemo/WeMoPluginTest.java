@@ -10,13 +10,13 @@ package com.whizzosoftware.hobson.wemo;
 import com.whizzosoftware.hobson.api.device.MockDeviceManager;
 import com.whizzosoftware.hobson.api.disco.MockDiscoManager;
 import com.whizzosoftware.hobson.api.plugin.MockPluginManager;
+import com.whizzosoftware.hobson.api.plugin.PluginContext;
 import com.whizzosoftware.hobson.api.plugin.http.MockHttpChannel;
-import com.whizzosoftware.hobson.api.util.UserUtil;
+import com.whizzosoftware.hobson.api.property.PropertyContainer;
+import com.whizzosoftware.hobson.api.variable.MockVariableManager;
 import org.junit.Test;
 
 import java.net.URI;
-import java.util.Dictionary;
-import java.util.Hashtable;
 
 import static org.junit.Assert.*;
 
@@ -32,8 +32,8 @@ public class WeMoPluginTest {
         plugin.setDeviceManager(dm);
         plugin.setDiscoManager(dsm);
 
-        Dictionary config = new Hashtable();
-        config.put(WeMoPlugin.PROP_WEMO_URIS, "[\"192.168.1.120\"]");
+        PropertyContainer config = new PropertyContainer();
+        config.setPropertyValue(WeMoPlugin.PROP_WEMO_URIS, "[\"192.168.1.120\"]");
 
         assertEquals(0, mhc.getGetRequests().size());
         plugin.onStartup(config);
@@ -53,7 +53,7 @@ public class WeMoPluginTest {
         assertEquals(1, mhc.getGetRequests().size());
 
         // make sure plugin configuration wasn't updated
-        assertNull(pm.getPluginConfigurationProperty(UserUtil.DEFAULT_USER, UserUtil.DEFAULT_HUB, "wemo", WeMoPlugin.PROP_WEMO_URIS));
+        assertNull(pm.getLocalPluginConfiguration(plugin.getContext()));
     }
 
     @Test
@@ -61,13 +61,15 @@ public class WeMoPluginTest {
         WeMoPlugin plugin = new WeMoPlugin("wemo");
         MockPluginManager pm = new MockPluginManager();
         MockDeviceManager dm = new MockDeviceManager();
+        MockVariableManager vm = new MockVariableManager();
         plugin.setPluginManager(pm);
         plugin.setDeviceManager(dm);
-        assertNull(pm.getPluginConfigurationProperty(UserUtil.DEFAULT_USER, UserUtil.DEFAULT_HUB, "wemo", WeMoPlugin.PROP_WEMO_URIS));
+        plugin.setVariableManager(vm);
+        assertNull(pm.getLocalPluginConfiguration(PluginContext.createLocal("wemo")));
 
         plugin.onHttpResponse(200, null, "<?xml version=\"1.0\"?> <root xmlns=\"urn:Belkin:device-1-0\"> <specVersion> <major>1</major> <minor>0</minor> </specVersion> <device> <deviceType>urn:Belkin:device:insight:1</deviceType> <friendlyName>WeMo Insight</friendlyName> <manufacturer>Belkin International Inc.</manufacturer> <manufacturerURL>http://www.belkin.com</manufacturerURL> <modelDescription>Belkin Insight 1.0</modelDescription> <modelName>Insight</modelName> <modelNumber>1.0</modelNumber> <modelURL>http://www.belkin.com/plugin/</modelURL> <serialNumber>221437K1200D6D</serialNumber> <UDN>uuid:Insight-1_0-221437K1200D6D</UDN> <UPC>123456789</UPC> <macAddress>94103E3B6B1C</macAddress> <firmwareVersion>WeMo_WW_2.00.7166.PVT</firmwareVersion> <iconVersion>0|49153</iconVersion> <binaryState>0</binaryState> <iconList> <icon> <mimetype>jpg</mimetype> <width>100</width> <height>100</height> <depth>100</depth> <url>icon.jpg</url> </icon> </iconList> </device> </root>", new URI("http://192.168.1.120:49153/setup.xml"));
 
-        assertEquals("[\"192.168.1.120\"]", pm.getPluginConfigurationProperty(UserUtil.DEFAULT_USER, UserUtil.DEFAULT_HUB, "wemo", WeMoPlugin.PROP_WEMO_URIS));
+        assertEquals("[\"192.168.1.120\"]", pm.getLocalPluginConfiguration(plugin.getContext()).getPropertyValue(WeMoPlugin.PROP_WEMO_URIS));
     }
 
     @Test
@@ -75,13 +77,15 @@ public class WeMoPluginTest {
         WeMoPlugin plugin = new WeMoPlugin("wemo");
         MockPluginManager pm = new MockPluginManager();
         MockDeviceManager dm = new MockDeviceManager();
+        MockVariableManager vm = new MockVariableManager();
         plugin.setPluginManager(pm);
         plugin.setDeviceManager(dm);
-        assertNull(pm.getPluginConfigurationProperty(UserUtil.DEFAULT_USER, UserUtil.DEFAULT_HUB, "wemo", WeMoPlugin.PROP_WEMO_URIS));
+        plugin.setVariableManager(vm);
+        assertNull(pm.getLocalPluginConfiguration(plugin.getContext()));
 
         plugin.onHttpResponse(200, null, "<?xml version=\"1.0\"?> <root xmlns=\"urn:Belkin:device-1-0\"> <specVersion> <major>1</major> <minor>0</minor> </specVersion> <device> <deviceType>urn:Belkin:device:insight:1</deviceType> <friendlyName>WeMo Insight</friendlyName> <manufacturer>Belkin International Inc.</manufacturer> <manufacturerURL>http://www.belkin.com</manufacturerURL> <modelDescription>Belkin Insight 1.0</modelDescription> <modelName>Insight</modelName> <modelNumber>1.0</modelNumber> <modelURL>http://www.belkin.com/plugin/</modelURL> <serialNumber>221437K1200D6D</serialNumber> <UDN>uuid:Insight-1_0-221437K1200D6D</UDN> <UPC>123456789</UPC> <macAddress>94103E3B6B1C</macAddress> <firmwareVersion>WeMo_WW_2.00.7166.PVT</firmwareVersion> <iconVersion>0|49153</iconVersion> <binaryState>0</binaryState> <iconList> <icon> <mimetype>jpg</mimetype> <width>100</width> <height>100</height> <depth>100</depth> <url>icon.jpg</url> </icon> </iconList> </device> </root>", new URI("https://192.168.1.120:49153/setup.xml"));
 
-        assertEquals("[\"https://192.168.1.120:49153/setup.xml\"]", pm.getPluginConfigurationProperty(UserUtil.DEFAULT_USER, UserUtil.DEFAULT_HUB, "wemo", WeMoPlugin.PROP_WEMO_URIS));
+        assertEquals("[\"https://192.168.1.120:49153/setup.xml\"]", pm.getLocalPluginConfiguration(plugin.getContext()).getPropertyValue(WeMoPlugin.PROP_WEMO_URIS));
     }
 
     @Test
@@ -89,16 +93,18 @@ public class WeMoPluginTest {
         WeMoPlugin plugin = new WeMoPlugin("wemo");
         MockPluginManager pm = new MockPluginManager();
         MockDeviceManager dm = new MockDeviceManager();
+        MockVariableManager vm = new MockVariableManager();
         plugin.setPluginManager(pm);
         plugin.setDeviceManager(dm);
-        Dictionary config = new Hashtable();
-        config.put(WeMoPlugin.PROP_WEMO_URIS, "[\"192.168.1.120\"]");
+        plugin.setVariableManager(vm);
+        PropertyContainer config = new PropertyContainer();
+        config.setPropertyValue(WeMoPlugin.PROP_WEMO_URIS, "[\"192.168.1.120\"]");
         plugin.onPluginConfigurationUpdate(config);
-        assertNull(pm.getPluginConfigurationProperty(UserUtil.DEFAULT_USER, UserUtil.DEFAULT_HUB, "wemo", WeMoPlugin.PROP_WEMO_URIS));
+        assertNull(pm.getLocalPluginConfiguration(plugin.getContext()));
 
         plugin.onHttpResponse(200, null, "<?xml version=\"1.0\"?> <root xmlns=\"urn:Belkin:device-1-0\"> <specVersion> <major>1</major> <minor>0</minor> </specVersion> <device> <deviceType>urn:Belkin:device:insight:1</deviceType> <friendlyName>WeMo Insight</friendlyName> <manufacturer>Belkin International Inc.</manufacturer> <manufacturerURL>http://www.belkin.com</manufacturerURL> <modelDescription>Belkin Insight 1.0</modelDescription> <modelName>Insight</modelName> <modelNumber>1.0</modelNumber> <modelURL>http://www.belkin.com/plugin/</modelURL> <serialNumber>221437K1200D6D</serialNumber> <UDN>uuid:Insight-1_0-221437K1200D6D</UDN> <UPC>123456789</UPC> <macAddress>94103E3B6B1C</macAddress> <firmwareVersion>WeMo_WW_2.00.7166.PVT</firmwareVersion> <iconVersion>0|49153</iconVersion> <binaryState>0</binaryState> <iconList> <icon> <mimetype>jpg</mimetype> <width>100</width> <height>100</height> <depth>100</depth> <url>icon.jpg</url> </icon> </iconList> </device> </root>", new URI("http://192.168.1.130:49153/setup.xml"));
 
-        assertEquals("[\"192.168.1.120\",\"192.168.1.130\"]", pm.getPluginConfigurationProperty(UserUtil.DEFAULT_USER, UserUtil.DEFAULT_HUB, "wemo", WeMoPlugin.PROP_WEMO_URIS));
+        assertEquals("[\"192.168.1.120\",\"192.168.1.130\"]", pm.getLocalPluginConfiguration(plugin.getContext()).getPropertyValue(WeMoPlugin.PROP_WEMO_URIS));
     }
 
     @Test
@@ -106,16 +112,18 @@ public class WeMoPluginTest {
         WeMoPlugin plugin = new WeMoPlugin("wemo");
         MockPluginManager pm = new MockPluginManager();
         MockDeviceManager dm = new MockDeviceManager();
+        MockVariableManager vm = new MockVariableManager();
         plugin.setPluginManager(pm);
         plugin.setDeviceManager(dm);
-        Dictionary config = new Hashtable();
-        config.put(WeMoPlugin.PROP_WEMO_URIS, "[\"192.168.1.120\"]");
+        plugin.setVariableManager(vm);
+        PropertyContainer config = new PropertyContainer();
+        config.setPropertyValue(WeMoPlugin.PROP_WEMO_URIS, "[\"192.168.1.120\"]");
         plugin.onPluginConfigurationUpdate(config);
-        assertNull(pm.getPluginConfigurationProperty(UserUtil.DEFAULT_USER, UserUtil.DEFAULT_HUB, "wemo", WeMoPlugin.PROP_WEMO_URIS));
+        assertNull(pm.getLocalPluginConfiguration(plugin.getContext()));
 
         plugin.onHttpResponse(200, null, "<?xml version=\"1.0\"?> <root xmlns=\"urn:Belkin:device-1-0\"> <specVersion> <major>1</major> <minor>0</minor> </specVersion> <device> <deviceType>urn:Belkin:device:insight:1</deviceType> <friendlyName>WeMo Insight</friendlyName> <manufacturer>Belkin International Inc.</manufacturer> <manufacturerURL>http://www.belkin.com</manufacturerURL> <modelDescription>Belkin Insight 1.0</modelDescription> <modelName>Insight</modelName> <modelNumber>1.0</modelNumber> <modelURL>http://www.belkin.com/plugin/</modelURL> <serialNumber>221437K1200D6D</serialNumber> <UDN>uuid:Insight-1_0-221437K1200D6D</UDN> <UPC>123456789</UPC> <macAddress>94103E3B6B1C</macAddress> <firmwareVersion>WeMo_WW_2.00.7166.PVT</firmwareVersion> <iconVersion>0|49153</iconVersion> <binaryState>0</binaryState> <iconList> <icon> <mimetype>jpg</mimetype> <width>100</width> <height>100</height> <depth>100</depth> <url>icon.jpg</url> </icon> </iconList> </device> </root>", new URI("http://192.168.1.130:49154/setup.xml"));
 
-        assertEquals("[\"192.168.1.120\",\"192.168.1.130:49154\"]", pm.getPluginConfigurationProperty(UserUtil.DEFAULT_USER, UserUtil.DEFAULT_HUB, "wemo", WeMoPlugin.PROP_WEMO_URIS));
+        assertEquals("[\"192.168.1.120\",\"192.168.1.130:49154\"]", pm.getLocalPluginConfiguration(plugin.getContext()).getPropertyValue(WeMoPlugin.PROP_WEMO_URIS));
     }
 
     @Test
@@ -123,19 +131,22 @@ public class WeMoPluginTest {
         WeMoPlugin plugin = new WeMoPlugin("wemo");
         MockPluginManager pm = new MockPluginManager();
         MockDeviceManager dm = new MockDeviceManager();
+        MockVariableManager vm = new MockVariableManager();
         plugin.setPluginManager(pm);
         plugin.setDeviceManager(dm);
-        Dictionary config = new Hashtable();
-        config.put(WeMoPlugin.PROP_WEMO_URIS, "[\"192.168.1.120\"]");
+        plugin.setVariableManager(vm);
+
+        PropertyContainer config = new PropertyContainer();
+        config.setPropertyValue(WeMoPlugin.PROP_WEMO_URIS, "[\"192.168.1.120\"]");
         plugin.onPluginConfigurationUpdate(config);
 
         // make sure property is unset
-        assertNull(pm.getPluginConfigurationProperty(UserUtil.DEFAULT_USER, UserUtil.DEFAULT_HUB, "wemo", WeMoPlugin.PROP_WEMO_URIS));
+        assertNull(pm.getLocalPluginConfiguration(plugin.getContext()));
 
         plugin.onHttpResponse(200, null, "<?xml version=\"1.0\"?> <root xmlns=\"urn:Belkin:device-1-0\"> <specVersion> <major>1</major> <minor>0</minor> </specVersion> <device> <deviceType>urn:Belkin:device:insight:1</deviceType> <friendlyName>WeMo Insight</friendlyName> <manufacturer>Belkin International Inc.</manufacturer> <manufacturerURL>http://www.belkin.com</manufacturerURL> <modelDescription>Belkin Insight 1.0</modelDescription> <modelName>Insight</modelName> <modelNumber>1.0</modelNumber> <modelURL>http://www.belkin.com/plugin/</modelURL> <serialNumber>221437K1200D6D</serialNumber> <UDN>uuid:Insight-1_0-221437K1200D6D</UDN> <UPC>123456789</UPC> <macAddress>94103E3B6B1C</macAddress> <firmwareVersion>WeMo_WW_2.00.7166.PVT</firmwareVersion> <iconVersion>0|49153</iconVersion> <binaryState>0</binaryState> <iconList> <icon> <mimetype>jpg</mimetype> <width>100</width> <height>100</height> <depth>100</depth> <url>icon.jpg</url> </icon> </iconList> </device> </root>", new URI("http://192.168.1.120:49153/setup.xml"));
 
         // make sure the property is still unset
-        assertNull(pm.getPluginConfigurationProperty(UserUtil.DEFAULT_USER, UserUtil.DEFAULT_HUB, "wemo", WeMoPlugin.PROP_WEMO_URIS));
+        assertNull(pm.getLocalPluginConfiguration(plugin.getContext()));
     }
 
     @Test

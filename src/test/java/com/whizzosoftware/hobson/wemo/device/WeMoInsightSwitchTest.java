@@ -7,6 +7,8 @@
  *******************************************************************************/
 package com.whizzosoftware.hobson.wemo.device;
 
+import com.whizzosoftware.hobson.api.device.MockDeviceManager;
+import com.whizzosoftware.hobson.api.plugin.MockHobsonPlugin;
 import com.whizzosoftware.hobson.wemo.api.WeMoService;
 import org.junit.Test;
 import org.w3c.dom.Document;
@@ -144,7 +146,10 @@ public class WeMoInsightSwitchTest {
                 "\n";
 
         Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new InputSource(new StringReader(xml)));
-        WeMoDevice device = new WeMoInsightSwitch(null, "id", "http://www.foo.com:5000/service.xml", doc);
+        MockDeviceManager dm = new MockDeviceManager();
+        MockHobsonPlugin plugin = new MockHobsonPlugin("plugin1");
+        plugin.setDeviceManager(dm);
+        WeMoDevice device = new WeMoInsightSwitch(plugin, "id", "http://www.foo.com:5000/service.xml", doc);
         assertEquals("WeMo Insight", device.getName());
         assertEquals("WeMo_WW_2.00.7166.PVT", device.getFirmwareVersion());
 

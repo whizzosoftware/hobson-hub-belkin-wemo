@@ -7,7 +7,6 @@
  *******************************************************************************/
 package com.whizzosoftware.hobson.wemo;
 
-import com.whizzosoftware.hobson.api.config.ConfigurationPropertyMetaData;
 import com.whizzosoftware.hobson.api.device.HobsonDevice;
 import com.whizzosoftware.hobson.api.disco.DeviceAdvertisement;
 import com.whizzosoftware.hobson.api.event.DeviceAdvertisementEvent;
@@ -16,6 +15,8 @@ import com.whizzosoftware.hobson.api.event.HobsonEvent;
 import com.whizzosoftware.hobson.api.plugin.PluginStatus;
 import com.whizzosoftware.hobson.api.plugin.http.AbstractHttpClientPlugin;
 import com.whizzosoftware.hobson.api.plugin.http.HttpChannel;
+import com.whizzosoftware.hobson.api.property.PropertyContainer;
+import com.whizzosoftware.hobson.api.property.TypedProperty;
 import com.whizzosoftware.hobson.ssdp.SSDPPacket;
 import com.whizzosoftware.hobson.wemo.device.WeMoDevice;
 import com.whizzosoftware.hobson.wemo.device.WeMoDeviceFactory;
@@ -55,18 +56,16 @@ public class WeMoPlugin extends AbstractHttpClientPlugin {
     }
 
     @Override
-    public void onStartup(Dictionary config) {
-        // add config property for devices
-        addConfigurationPropertyMetaData(new ConfigurationPropertyMetaData(PROP_WEMO_URIS, "WeMo URIs", "A list of hosts for your WeMo devices (should currently be formatted as a JSON array of strings until the web console supports proper lists)", ConfigurationPropertyMetaData.Type.STRING));
-
-        // set the status to running
-        setStatus(new PluginStatus(PluginStatus.Status.RUNNING));
-
+    public void onStartup(PropertyContainer config) {
+        // process the config
         onPluginConfigurationUpdate(config);
 
         // request current SSDP device advertisements
         logger.debug("Requesting device advertisement snapshot");
         requestDeviceAdvertisementSnapshot(SSDPPacket.PROTOCOL_ID);
+
+        // set the status to running
+        setStatus(PluginStatus.running());
     }
 
     @Override
@@ -103,14 +102,21 @@ public class WeMoPlugin extends AbstractHttpClientPlugin {
         }
     }
 
+    @Override
+    protected TypedProperty[] createSupportedProperties() {
+        return new TypedProperty[] {
+            new TypedProperty.Builder(PROP_WEMO_URIS, "WeMo URIs", "A list of hosts for your WeMo devices (should currently be formatted as a JSON array of strings until the web console supports proper lists)", TypedProperty.Type.STRING).build()
+        };
+    }
+
     /**
      * Callback method when the plugin's configuration changes.
      *
      * @param config the new configuration
      */
     @Override
-    public void onPluginConfigurationUpdate(Dictionary config) {
-        String json = (String)config.get(PROP_WEMO_URIS);
+    public void onPluginConfigurationUpdate(PropertyContainer config) {
+        String json = (String)config.getPropertyValue(PROP_WEMO_URIS);
         if (json != null) {
             deviceURIsProperty = new JSONArray(new JSONTokener(json));
             for (int i=0; i < deviceURIsProperty.length(); i++) {
@@ -129,7 +135,7 @@ public class WeMoPlugin extends AbstractHttpClientPlugin {
                 final SSDPPacket ssdp = (SSDPPacket)advertisement.getObject();
                 if (ssdp != null) {
                     logger.trace("Got SSDP advertisement: {}, {}", ssdp.getST(), ssdp.getLocation());
-                    if (ssdp.getUSN() != null && ssdp.getUSN().contains("urn:Belkin") && ssdp.getUSN().contains("uuid:Insight-1") && !discoveredDeviceLocations.contains(ssdp.getLocation())) {
+                    if (ssdp.getUSN() != null && ssdp.getUSN().contains("urn:Belkin") && ssdp.getUSN().contains("uuid:Insight") && !discoveredDeviceLocations.contains(ssdp.getLocation())) {
                         synchronized (discoveredDeviceLocations) {
                             if (!discoveredDeviceLocations.contains(ssdp.getLocation())) {
                                 onFoundDevice(ssdp.getLocation());
@@ -220,7 +226,7 @@ public class WeMoPlugin extends AbstractHttpClientPlugin {
 
             // add new URI to the list
             deviceURIsProperty.put(suri);
-            setPluginConfigurationProperty(getId(), PROP_WEMO_URIS, deviceURIsProperty.toString());
+            setPluginConfigurationProperty(getContext(), PROP_WEMO_URIS, deviceURIsProperty.toString());
         }
     }
 

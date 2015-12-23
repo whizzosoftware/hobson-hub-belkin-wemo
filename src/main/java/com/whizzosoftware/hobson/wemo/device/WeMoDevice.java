@@ -21,7 +21,6 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -81,15 +80,15 @@ abstract public class WeMoDevice extends AbstractHobsonDevice {
             if (statusCode == 200) {
                 onStateUpdate(WeMoUtil.createResponseMap(response));
             } else {
-                onHttpRequestFailure(new HobsonRuntimeException("Unexpected response code from device " + getId() + ": " + statusCode), context);
+                onHttpRequestFailure(new HobsonRuntimeException("Unexpected response code from device " + getContext() + ": " + statusCode), context);
             }
         } catch (Exception e) {
-            logger.error("Unable to parse response from device " + getId(), e);
+            logger.error("Unable to parse response from device " + getContext(), e);
         }
     }
 
     public void onHttpRequestFailure(Throwable cause, Object context) {
-        logger.error("Error sending HTTP request for device " + getId(), cause);
+        logger.error("Error sending HTTP request for device " + getContext(), cause);
     }
 
     abstract public void onStateUpdate(Map<String,Object> update);

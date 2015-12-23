@@ -9,6 +9,8 @@ package com.whizzosoftware.hobson.wemo.device;
 
 import com.whizzosoftware.hobson.api.device.DeviceType;
 import com.whizzosoftware.hobson.api.plugin.HobsonPlugin;
+import com.whizzosoftware.hobson.api.property.PropertyContainer;
+import com.whizzosoftware.hobson.api.property.TypedProperty;
 import com.whizzosoftware.hobson.api.variable.HobsonVariable;
 import com.whizzosoftware.hobson.api.variable.VariableConstants;
 import com.whizzosoftware.hobson.api.variable.VariableUpdate;
@@ -39,7 +41,8 @@ public class WeMoInsightSwitch extends WeMoDevice {
     }
 
     @Override
-    public void onStartup() {
+    public void onStartup(PropertyContainer config) {
+        super.onStartup(config);
         publishVariable(VariableConstants.ON, true, HobsonVariable.Mask.READ_WRITE);
         publishVariable(VariableConstants.FIRMWARE_VERSION, getFirmwareVersion(), HobsonVariable.Mask.READ_ONLY);
         publishVariable(VariableConstants.ENERGY_CONSUMPTION_WATTS, null, HobsonVariable.Mask.READ_ONLY);
@@ -65,11 +68,16 @@ public class WeMoInsightSwitch extends WeMoDevice {
     }
 
     @Override
+    protected TypedProperty[] createSupportedProperties() {
+        return null;
+    }
+
+    @Override
     public void onRefresh() {
         try {
             invokeAction(SERVICE_INSIGHT1, ACTION_GET_INSIGHT_PARAMS, null);
         } catch (Exception e) {
-            logger.error("Error refreshing device " + getId(), e);
+            logger.error("Error refreshing device " + getContext(), e);
         }
     }
 
@@ -99,15 +107,15 @@ public class WeMoInsightSwitch extends WeMoDevice {
     private void onInsightStateUpdate(WeMoInsightState state) {
         List<VariableUpdate> updates = null;
 
-        if (lastState == null || lastState != state.getState()) {
+        if (lastState == null || !lastState.equals(state.getState())) {
             updates = new ArrayList<>();
-            updates.add(new VariableUpdate(getPluginId(), getId(), VariableConstants.ON, state.getState() > 0));
+            updates.add(new VariableUpdate(getContext(), VariableConstants.ON, state.getState() > 0));
         }
-        if (lastECW == null || lastECW != state.getCurrentMw()) {
+        if (lastECW == null || !lastECW.equals(state.getCurrentMw())) {
             if (updates == null) {
                 updates = new ArrayList<>();
             }
-            updates.add(new VariableUpdate(getPluginId(), getId(), VariableConstants.ENERGY_CONSUMPTION_WATTS, state.getCurrentMw() / 1000));
+            updates.add(new VariableUpdate(getContext(), VariableConstants.ENERGY_CONSUMPTION_WATTS, state.getCurrentMw() / 1000));
         }
 
         if (updates != null) {
