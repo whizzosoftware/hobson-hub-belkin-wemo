@@ -80,7 +80,7 @@ public class WeMoPlugin extends AbstractHttpClientPlugin {
      */
     @Override
     public String getName() {
-        return "Example Plugin";
+        return "Belkin WeMo";
     }
 
     @Override
